@@ -22,7 +22,9 @@ function MenuManagement() {
       const response = await fetch('http://localhost:3000/api/menu');
       if (!response.ok) throw new Error('Errore nel caricamento del menu');
       const data = await response.json();
-      setMenuItems(data);
+      // Handle both array and object with items property
+      const items = Array.isArray(data) ? data : (data.items || []);
+      setMenuItems(items);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching menu:', err);

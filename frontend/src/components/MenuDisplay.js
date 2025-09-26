@@ -17,7 +17,9 @@ function MenuDisplay() {
       const response = await fetch('http://localhost:3000/api/menu');
       if (!response.ok) throw new Error('Errore nel caricamento');
       const data = await response.json();
-      setMenuItems(data.filter(item => item.available));
+      // Handle both array and object with items property
+      const items = Array.isArray(data) ? data : (data.items || []);
+      setMenuItems(items.filter(item => item.available));
       setError(null);
     } catch (err) {
       setError(err.message);

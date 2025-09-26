@@ -15,8 +15,10 @@ function KitchenView() {
       const response = await fetch('http://localhost:3000/api/orders');
       if (!response.ok) throw new Error('Errore caricamento');
       const data = await response.json();
+      // Handle both array and object with orders property
+      const orders = Array.isArray(data) ? data : (data.orders || []);
       // Show only orders that need kitchen attention
-      setOrders(data.filter(o => ['pending', 'preparing'].includes(o.status)));
+      setOrders(orders.filter(o => ['pending', 'preparing'].includes(o.status)));
     } catch (err) {
       console.error('Error:', err);
     }
