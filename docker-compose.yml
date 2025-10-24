@@ -1,0 +1,105 @@
+services:
+  # Database Services
+  postgres-menu:
+    image: postgres:13
+    container_name: byteristo-db-menu
+    environment:
+      POSTGRES_DB: menu_inventory_db
+      POSTGRES_USER: menu_user
+      POSTGRES_PASSWORD: menu_password
+    volumes:
+      - postgres_menu_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - byteristo-network
+
+  postgres-orders:
+    image: postgres:13
+    container_name: byteristo-db-orders
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: orders_user
+      POSTGRES_PASSWORD: orders_password
+    volumes:
+      - postgres_orders_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - byteristo-network
+
+  # Menu & Inventory Service
+  menu-inventory-service:
+    build: ./services/menu-inventory
+    container_name: byteristo-menu-inventory
+    ports:
+      - "3001:3001"
+    environment:
+      - FLASK_ENV=development
+      - PORT=3001
+      - DB_HOST=postgres-menu
+      - DB_PORT=5432
+      - DB_NAME=menu_inventory_db
+      - DB_USER=menu_user
+      - DB_PASSWORD=menu_password
+    depends_on:
+      - postgres-menu
+    networks:
+      - byteristo-network
+
+  # Order Management Service
+  order-management-service:
+    build: ./services/order-management
+    container_name: byteristo-order-management
+    ports:
+      - "3002:3002"
+    environment:
+      - FLASK_ENV=development
+      - PORT=3002
+      - DB_HOST=postgres-orders
+      - DB_PORT=5432
+      - DB_NAME=orders_db
+      - DB_USER=orders_user
+      - DB_PASSWORD=orders_password
+      - MENU_SERVICE_URL=http://menu-inventory-service:3001
+    depends_on:
+      - postgres-orders
+      - menu-inventory-service
+    networks:
+      - byteristo-network
+
+  # API Gateway
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: byteristo-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - FLASK_ENV=development
+      - PORT=3000
+      - MENU_SERVICE_URL=http://menu-inventory-service:3001
+      - ORDER_SERVICE_URL=http://order-management-service:3002
+    depends_on:
+      - menu-inventory-service
+      - order-management-service
+    networks:
+      - byteristo-network
+
+  # Frontend
+  frontend:
+    build: ./frontend
+    container_name: byteristo-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - byteristo-network
+
+volumes:
+  postgres_menu_data:
+  postgres_orders_data:
+
+networks:
+  byteristo-network:
+    driver: bridge
