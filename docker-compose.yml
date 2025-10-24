@@ -85,6 +85,17 @@ services:
     networks:
       - byteristo-network
 
+  # Frontend
+  frontend:
+    build: ./frontend
+    container_name: byteristo-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - byteristo-network
+
 volumes:
   postgres_menu_data:
   postgres_orders_data:
