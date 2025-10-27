@@ -1,17 +1,15 @@
-# 🍕 ByteRisto
-
-## Restaurant Management System
+# ByteRisto - Restaurant Management System
 
 ByteRisto is a modern microservices-based restaurant management system built with Flask and React.
 
-### Architecture
+## Architecture
 
 - **API Gateway** (Port 3000) - Central routing and request handling
 - **Menu Service** (Port 3001) - Menu and inventory management
 - **Order Service** (Port 3002) - Order processing and management
 - **Frontend** (Port 8080) - React web application
 
-### Technology Stack
+## Technology Stack
 
 **Backend:**
 - Python 3.11
@@ -23,7 +21,7 @@ ByteRisto is a modern microservices-based restaurant management system built wit
 - React 18.2.0
 - Nginx (production server)
 
-### Quick Start
+## Quick Start
 
 ```bash
 # Start all services using management script
@@ -39,24 +37,27 @@ ByteRisto is a modern microservices-based restaurant management system built wit
 ./scripts/byteristo.sh stop
 ```
 
-### Alternative: Docker Compose
+## Alternative: Docker Compose
 
 ```bash
 # Start all services
 docker-compose up -d
 
+# Start all services and rebuild the container
+docker-compose up -d --build
+
 # Stop all services
 docker-compose down
 ```
 
-### Development
+## Development
 
-#### Prerequisites
+### Prerequisites
 - Docker & Docker Compose
 - Python 3.11+ (for local development)
 - Node.js 18+ (for frontend development)
 
-#### Project Structure
+### Project Structure
 ```
 ByteRisto/
 ├── services/
@@ -74,7 +75,7 @@ ByteRisto/
 └── README.md
 ```
 
-### Service URLs
+## Service URLs
 
 - **Frontend**: http://localhost:8080
 - **API Gateway**: http://localhost:3000
@@ -83,7 +84,7 @@ ByteRisto/
 - **Menu DB**: localhost:5432
 - **Orders DB**: localhost:5433
 
-### Management Script
+## Management Script
 
 The `byteristo.sh` script provides convenient commands:
 
@@ -94,6 +95,6 @@ The `byteristo.sh` script provides convenient commands:
 - `logs [service]` - View logs
 - `setup` - Setup development environment
 
-### Version
+## Version
 
 Current: **v1.0.0** - Frontend MVP with React application
