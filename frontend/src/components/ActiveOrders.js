@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, payOrder, formatOrderStatus, formatOrderType, calculateOrderTiming } from '../api/orderApi';
+import { getOrders, updateOrderStatus, formatOrderStatus, formatOrderType, calculateOrderTiming } from '../api/orderApi';
 
-export default function Payments() {
+export default function ActiveOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('active');
   const [selectedTable, setSelectedTable] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('cash');
-  const [processingPayment, setProcessingPayment] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -21,13 +20,17 @@ export default function Payments() {
       if (interval) clearInterval(interval);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTable, autoRefresh]);
+  }, [filter, selectedTable, autoRefresh]);
 
   const loadOrders = async () => {
     try {
-      const filters = {
-        status: 'ready' // Solo ordini pronti per il pagamento (delivered = già pagato)
-      };
+      const filters = {};
+
+      if (filter === 'active') {
+        filters.status = 'active';
+      } else if (filter !== 'all') {
+        filters.status = filter;
+      }
 
       if (selectedTable) {
         filters.table_number = selectedTable;
@@ -42,28 +45,13 @@ export default function Payments() {
     }
   };
 
-  const handlePayment = async (orderId, orderAmount) => {
+  const handleStatusUpdate = async (orderId, newStatus) => {
     try {
-      setProcessingPayment(orderId);
-      
-      // Pagamento in contanti: nessuna logica di resto, si assume importo esatto
-      let paymentAmount = orderAmount;
-      
-      // Mark order as paid (no actual payment processing)
-      const result = await payOrder(orderId, {
-        payment_method: paymentMethod,
-        payment_amount: paymentAmount
-      });
-      
-      alert('Pagamento completato con successo!');
-      
-      // Reload orders
-      await loadOrders();
+      await updateOrderStatus(orderId, newStatus);
+      loadOrders();
     } catch (error) {
-      console.error('Error processing payment:', error);
-      alert('Errore nel processare il pagamento: ' + error.message);
-    } finally {
-      setProcessingPayment(null);
+      console.error('Error updating order status:', error);
+      alert('Errore nell\'aggiornamento dello stato: ' + error.message);
     }
   };
 
@@ -91,6 +79,21 @@ export default function Payments() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  const getStatusActions = (order) => {
+    const actions = [];
+
+    switch (order.status) {
+      case 'ready':
+        // Nessuna azione per ordini pronti
+        break;
+
+      default:
+        break;
+    }
+
+    return actions;
+  };
+
   const getUniqueTableNumbers = () => {
     const tables = [...new Set(orders.map(order => order.table_number))];
     return tables.sort((a, b) => a - b);
@@ -101,15 +104,14 @@ export default function Payments() {
   );
 
   if (loading) {
-    return <div className="glass-card loading-panel">Caricamento pagamenti...</div>;
+    return <div className="glass-card loading-panel">Caricamento ordini...</div>;
   }
 
   return (
     <div className="active-orders">
       <section className="glass-card active-orders__header">
         <div className="active-orders__title">
-          <h2>💳 Pagamenti</h2>
-          <span className="text-muted">Gestisci i pagamenti per gli ordini pronti</span>
+          <h2>📋 Gestione Ordini</h2>
         </div>
 
         <div className="active-orders__actions">
@@ -136,6 +138,26 @@ export default function Payments() {
       <section className="glass-card active-orders__filters">
         <div className="active-orders__filters-row">
           <div className="form-field form-field--compact">
+            <label className="form-label" htmlFor="order-status-filter">
+              Stato
+            </label>
+            <select
+              id="order-status-filter"
+              className="select-glass"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">Tutti gli ordini</option>
+              <option value="active">Ordini attivi</option>
+              <option value="confirmed">Confermati</option>
+              <option value="preparing">In preparazione</option>
+              <option value="ready">Pronti</option>
+              <option value="delivered">Pagati</option>
+              <option value="cancelled">Annullati</option>
+            </select>
+          </div>
+
+          <div className="form-field form-field--compact">
             <label className="form-label" htmlFor="table-filter">
               Tavolo
             </label>
@@ -152,31 +174,17 @@ export default function Payments() {
             </select>
           </div>
 
-          <div className="form-field form-field--compact">
-            <label className="form-label" htmlFor="payment-method">
-              Metodo di Pagamento
-            </label>
-            <select
-              id="payment-method"
-              className="select-glass"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            >
-              <option value="cash">💵 Contanti</option>
-              <option value="card">💳 Carta</option>
-              <option value="other">📱 Altro</option>
-            </select>
-          </div>
-
-          <span className="active-orders__count">{filteredOrders.length} ordini pronti</span>
+          <span className="active-orders__count">{filteredOrders.length} ordini trovati</span>
         </div>
       </section>
 
       <div className="active-orders__list">
         {filteredOrders.length === 0 && (
           <div className="empty-state">
-            <span role="img" aria-label="payment">💳</span>
-            Non ci sono ordini pronti per il pagamento al momento.
+            <span role="img" aria-label="clipboard">📋</span>
+            {filter === 'active'
+              ? 'Non ci sono ordini attivi al momento.'
+              : 'Prova a cambiare i filtri per visualizzare altri ordini.'}
           </div>
         )}
 
@@ -207,11 +215,34 @@ export default function Payments() {
               </header>
 
               <div className="active-orders__card-body">
+                {order.status !== 'ready' && (
+                  <div className={`active-orders__timing ${order.status !== 'delivered' && timing.isOverdue ? 'active-orders__timing--overdue' : ''}`}>
+                    {order.status === 'delivered' ? (
+                      <span>
+                        Pagato il {new Date(order.created_at).toLocaleDateString('it-IT')} • {new Date(order.created_at).toLocaleTimeString('it-IT')}
+                      </span>
+                    ) : (
+                      <>
+                        <span>
+                          Ordinato {timing.elapsedMinutes} min fa • {new Date(order.created_at).toLocaleTimeString('it-IT')}
+                        </span>
+                        {timing.estimatedRemainingMinutes !== null && (
+                          <span className={timing.isOverdue ? 'overdue' : 'text-muted'}>
+                            {timing.isOverdue
+                              ? `In ritardo di ${Math.abs(timing.estimatedRemainingMinutes)} min`
+                              : `Stima: ${timing.estimatedRemainingMinutes} min`}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div>
                   <strong>Piatti ({order.items.length})</strong>
                   <div className="active-orders__items">
                     {order.items.map((item, index) => (
-                      <div key={index} className="active-orders__item">
+                    <div key={index} className="active-orders__item">
                         <div>
                           <span className="active-orders__item-name">
                             {item.quantity}× {item.menu_item_name}
@@ -240,15 +271,9 @@ export default function Payments() {
                 <div>
                   <div className="active-orders__footer-total">Totale: €{order.final_amount}</div>
                 </div>
-                <button
-                  type="button"
-                  className="button-glass button-glass--success"
-                  onClick={() => handlePayment(order.id, parseFloat(order.final_amount))}
-                  disabled={processingPayment === order.id}
-                  style={{ minWidth: '140px' }}
-                >
-                  {processingPayment === order.id ? '⏳ Elaborazione...' : '💰 Paga Ora'}
-                </button>
+                <div className="active-orders__actions">
+                  {getStatusActions(order)}
+                </div>
               </footer>
             </article>
           );
@@ -256,50 +281,37 @@ export default function Payments() {
       </div>
 
       <section className="glass-card active-orders__summary">
+        <h3>📊 Riepilogo</h3>
         <div className="active-orders__summary-grid">
           <div className="active-orders__summary-card">
             <div className="active-orders__summary-value">
-              €{filteredOrders.reduce((total, order) => total + parseFloat(order.final_amount), 0).toFixed(2)}
+              {orders.filter(o => o.status === 'confirmed').length}
             </div>
-            <div className="active-orders__summary-label">Totale da Incassare</div>
+            <div className="active-orders__summary-label">Confermati</div>
           </div>
           <div className="active-orders__summary-card">
-            <button
-              type="button"
-              className="button-glass button-glass--success"
-              onClick={async () => {
-                if (filteredOrders.length === 0) {
-                  alert('Non ci sono ordini da pagare');
-                  return;
-                }
-                
-                const totalAmount = filteredOrders.reduce((total, order) => total + parseFloat(order.final_amount), 0).toFixed(2);
-                
-                if (!window.confirm(`Confermi il pagamento di €${totalAmount} per ${filteredOrders.length} ordini?`)) {
-                  return;
-                }
-                
-                try {
-                  // Process all payments
-                  for (const order of filteredOrders) {
-                    await payOrder(order.id, {
-                      payment_method: paymentMethod,
-                      payment_amount: parseFloat(order.final_amount)
-                    });
-                  }
-                  
-                  alert(`Tutti i pagamenti completati con successo! Totale: €${totalAmount}`);
-                  await loadOrders();
-                } catch (error) {
-                  console.error('Error processing batch payment:', error);
-                  alert('Errore nel processare i pagamenti: ' + error.message);
-                }
-              }}
-              disabled={filteredOrders.length === 0 || processingPayment !== null}
-              style={{ width: '100%', height: '60px', fontSize: '1.1em' }}
-            >
-              💰 Paga Tutti ({filteredOrders.length})
-            </button>
+            <div className="active-orders__summary-value">
+              {orders.filter(o => o.status === 'preparing').length}
+            </div>
+            <div className="active-orders__summary-label">In Preparazione</div>
+          </div>
+          <div className="active-orders__summary-card">
+            <div className="active-orders__summary-value">
+              {orders.filter(o => o.status === 'ready').length}
+            </div>
+            <div className="active-orders__summary-label">Pronti</div>
+          </div>
+          <div className="active-orders__summary-card">
+            <div className="active-orders__summary-value">
+              {orders.filter(o => o.status === 'delivered').length}
+            </div>
+            <div className="active-orders__summary-label">Pagati</div>
+          </div>
+          <div className="active-orders__summary-card">
+            <div className="active-orders__summary-value">
+              €{orders.reduce((total, order) => total + parseFloat(order.final_amount), 0).toFixed(2)}
+            </div>
+            <div className="active-orders__summary-label">Totale Vendite</div>
           </div>
         </div>
       </section>
