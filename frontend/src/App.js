@@ -141,7 +141,7 @@ function App() {
         </main>
 
         <footer className="app-footer">
-          <div>ByteRisto v2.0 · Sistema di Gestione Ristorante Integrato</div>
+          <div>ByteRisto · Sistema di Gestione Ristorante Integrato</div>
         </footer>
       </div>
     </div>
