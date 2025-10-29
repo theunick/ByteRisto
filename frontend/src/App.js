@@ -1,88 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+// Import existing components
 import MenuDisplay from './components/MenuDisplay';
 import MenuManagement from './components/MenuManagement';
-import OrderView from './components/OrderView';
-import KitchenView from './components/KitchenView';
 import Payments from './components/Payments';
 
+// Import new order management components
+import OrderTaking from './components/OrderTaking';
+import KitchenDisplay from './components/KitchenDisplay';
+import ActiveOrders from './components/ActiveOrders';
+
 function App() {
-  const [activeView, setActiveView] = useState('menu');
+  const [activeTab, setActiveTab] = useState('menu');
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const tabs = [
+    { id: 'menu', label: '🍽️ Menu', component: <MenuDisplay /> },
+    { id: 'menuManagement', label: '🛠️ Gestione Menu', component: <MenuManagement /> },
+    { id: 'orderTaking', label: '📋 Presa Ordini', component: <OrderTaking /> },
+    { id: 'activeOrders', label: '📊 Gestione Ordini', component: <ActiveOrders /> },
+    { id: 'kitchen', label: '👨‍🍳 Cucina', component: <KitchenDisplay /> },
+    { id: 'payments', label: '💳 Pagamenti', component: <Payments /> },
+  ];
+
+  const activeComponent = tabs.find(tab => tab.id === activeTab)?.component;
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif' }}>
-      <header style={{ 
-        backgroundColor: '#333', 
-        color: 'white', 
-        padding: '20px',
-        marginBottom: '20px'
-      }}>
-        <h1>ByteRisto</h1>
+    <div className="App">
+      <header className="app-topbar app-topbar--fixed">
+        <div className="app-topbar__content">
+          <div className="app-topbar__row">
+            <div>
+              <h1 className="app-topbar__title">🍴 ByteRisto</h1>
+            </div>
+
+            <div className="app-status-strip">
+              <span className="app-clock">
+                {currentTime.toLocaleString('it-IT', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })}
+              </span>
+            </div>
+          </div>
+
+          <div className="app-topbar__tabs">
+            <div className="app-tabs__inner">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`app-tab ${activeTab === tab.id ? 'app-tab--active' : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </header>
 
-      <nav style={{ 
-        backgroundColor: '#f4f4f4', 
-        padding: '10px',
-        marginBottom: '20px'
-      }}>
-        <button onClick={() => setActiveView('menu')} style={{ 
-          margin: '0 5px',
-          padding: '10px 20px',
-          cursor: 'pointer',
-          backgroundColor: activeView === 'menu' ? '#007bff' : '#fff',
-          color: activeView === 'menu' ? 'white' : 'black',
-          border: '1px solid #ddd'
-        }}>
-          Menu
-        </button>
-        <button onClick={() => setActiveView('menuManagement')} style={{ 
-          margin: '0 5px',
-          padding: '10px 20px',
-          cursor: 'pointer',
-          backgroundColor: activeView === 'menuManagement' ? '#007bff' : '#fff',
-          color: activeView === 'menuManagement' ? 'white' : 'black',
-          border: '1px solid #ddd'
-        }}>
-          Gestione Menu
-        </button>
-        <button onClick={() => setActiveView('orders')} style={{ 
-          margin: '0 5px',
-          padding: '10px 20px',
-          cursor: 'pointer',
-          backgroundColor: activeView === 'orders' ? '#007bff' : '#fff',
-          color: activeView === 'orders' ? 'white' : 'black',
-          border: '1px solid #ddd'
-        }}>
-          Ordini
-        </button>
-        <button onClick={() => setActiveView('kitchen')} style={{ 
-          margin: '0 5px',
-          padding: '10px 20px',
-          cursor: 'pointer',
-          backgroundColor: activeView === 'kitchen' ? '#007bff' : '#fff',
-          color: activeView === 'kitchen' ? 'white' : 'black',
-          border: '1px solid #ddd'
-        }}>
-          Cucina
-        </button>
-        <button onClick={() => setActiveView('payments')} style={{ 
-          margin: '0 5px',
-          padding: '10px 20px',
-          cursor: 'pointer',
-          backgroundColor: activeView === 'payments' ? '#007bff' : '#fff',
-          color: activeView === 'payments' ? 'white' : 'black',
-          border: '1px solid #ddd'
-        }}>
-          Pagamenti
-        </button>
-      </nav>
+      <div className="app-shell">
+        <main className="app-content">
+          <div className="scroll-wrap">
+            <div className="scroll-wrap__inner">
+              <div className="content-panel glass-card">
+                {activeComponent}
+              </div>
+            </div>
+          </div>
+        </main>
 
-      <main style={{ padding: '20px' }}>
-        {activeView === 'menu' && <MenuDisplay />}
-        {activeView === 'menuManagement' && <MenuManagement />}
-        {activeView === 'orders' && <OrderView />}
-        {activeView === 'kitchen' && <KitchenView />}
-        {activeView === 'payments' && <Payments />}
-      </main>
+        <footer className="app-footer">
+          <div>ByteRisto v2.0 · Sistema di Gestione Ristorante Integrato</div>
+        </footer>
+      </div>
     </div>
   );
 }
