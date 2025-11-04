@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, payOrder, formatOrderStatus, formatOrderType, calculateOrderTiming } from '../api/orderApi';
+import { getOrders, payOrder, formatOrderStatus, formatOrderType } from '../api/orderApi';
 
 export default function Payments() {
   const [orders, setOrders] = useState([]);
@@ -182,7 +182,6 @@ export default function Payments() {
 
         {filteredOrders.map((order) => {
           const accentColor = getStatusColor(order.status);
-          const timing = calculateOrderTiming(order.created_at, order.estimated_completion_time);
           const cardStyle = {
             border: `1px solid ${hexToRgba(accentColor, 0.45)}`,
             boxShadow: `0 24px 38px -28px ${hexToRgba(accentColor, 0.55)}`

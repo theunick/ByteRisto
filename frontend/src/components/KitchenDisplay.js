@@ -87,17 +87,6 @@ export default function KitchenDisplay() {
     return `${diffHours}h ${diffMinutes % 60}min fa`;
   };
 
-  const getPriorityLevel = (createdAt) => {
-    const now = new Date();
-    const orderTime = new Date(createdAt);
-    const diffMinutes = Math.floor((now - orderTime) / (1000 * 60));
-
-    if (diffMinutes > 45) return 'urgent';
-    if (diffMinutes > 30) return 'high';
-    if (diffMinutes > 15) return 'medium';
-    return 'normal';
-  };
-
   const getFilteredOrders = () => {
     const now = new Date();
 
@@ -184,7 +173,6 @@ export default function KitchenDisplay() {
         <div className="kitchen-display__grid">
           {filteredOrders.map((order) => {
             const accent = getStatusColor(order.status);
-            const priority = getPriorityLevel(order.created_at);
             const cardStyle = {
               borderColor: hexToRgba(accent, 0.45),
               boxShadow: `0 24px 38px -28px ${hexToRgba(accent, 0.55)}`
@@ -213,19 +201,8 @@ export default function KitchenDisplay() {
                 </header>
 
                 <div className="kitchen-display__card-body">
-                  <div className={`priority-chip priority-chip--${priority}`}>
-                    {priority === 'urgent' && '🚨'}
-                    {priority === 'high' && '⚠️'}
-                    {priority === 'medium' && '⏱️'}
-                    {priority === 'normal' && '🧊'}
-                    Priorità: {priority}
-                  </div>
-
                   <div className="kitchen-display__meta">
-                    <span className="text-muted">Creato alle {new Date(order.created_at).toLocaleTimeString('it-IT')}</span>
-                    {order.estimated_completion_time && (
-                      <span className="text-muted">Stima: {new Date(order.estimated_completion_time).toLocaleTimeString('it-IT')}</span>
-                    )}
+                    <span className="text-muted">Ordinato alle {new Date(order.created_at).toLocaleTimeString('it-IT')}</span>
                   </div>
 
                   <div className="kitchen-display__items">

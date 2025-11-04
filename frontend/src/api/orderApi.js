@@ -205,21 +205,3 @@ export const formatOrderType = (type) => {
   
   return typeLabels[type] || type;
 };
-
-export const calculateOrderTiming = (createdAt, estimatedCompletion) => {
-  const now = new Date();
-  const created = new Date(createdAt);
-  const elapsed = Math.floor((now - created) / (1000 * 60)); // minuti trascorsi
-  
-  let estimatedRemaining = null;
-  if (estimatedCompletion) {
-    const estimated = new Date(estimatedCompletion);
-    estimatedRemaining = Math.floor((estimated - now) / (1000 * 60));
-  }
-  
-  return {
-    elapsedMinutes: elapsed,
-    estimatedRemainingMinutes: estimatedRemaining,
-    isOverdue: estimatedRemaining !== null && estimatedRemaining < 0
-  };
-};

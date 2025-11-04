@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatus, formatOrderStatus, formatOrderType, calculateOrderTiming } from '../api/orderApi';
+import { getOrders, updateOrderStatus, formatOrderStatus, formatOrderType } from '../api/orderApi';
 
 export default function ActiveOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('active');
+  const [filter, setFilter] = useState('all');
   const [selectedTable, setSelectedTable] = useState('');
   const [autoRefresh, setAutoRefresh] = useState(true);
 
@@ -148,7 +148,6 @@ export default function ActiveOrders() {
               onChange={(e) => setFilter(e.target.value)}
             >
               <option value="all">Tutti gli ordini</option>
-              <option value="active">Ordini attivi</option>
               <option value="confirmed">Confermati</option>
               <option value="preparing">In preparazione</option>
               <option value="ready">Pronti</option>
@@ -190,7 +189,6 @@ export default function ActiveOrders() {
 
         {filteredOrders.map((order) => {
           const accentColor = getStatusColor(order.status);
-          const timing = calculateOrderTiming(order.created_at, order.estimated_completion_time);
           const cardStyle = {
             border: `1px solid ${hexToRgba(accentColor, 0.45)}`,
             boxShadow: `0 24px 38px -28px ${hexToRgba(accentColor, 0.55)}`
@@ -206,7 +204,7 @@ export default function ActiveOrders() {
                   <strong className="active-orders__order-number">{order.order_number}</strong>
                   <span>{formatOrderStatus(order.status)} • {formatOrderType(order.order_type)}</span>
                 </div>
-                <div className="active-orders__card-meta active-orders__card-meta--right">
+                <div className="active-orders__card-meta active-orders__card-meta--right" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
                   <span className="status-badge">Tavolo {order.table_number}</span>
                   {order.customer_name && (
                     <span>{order.customer_name}</span>
@@ -215,28 +213,14 @@ export default function ActiveOrders() {
               </header>
 
               <div className="active-orders__card-body">
-                {order.status !== 'ready' && (
-                  <div className={`active-orders__timing ${order.status !== 'delivered' && timing.isOverdue ? 'active-orders__timing--overdue' : ''}`}>
-                    {order.status === 'delivered' ? (
-                      <span>
-                        Pagato il {new Date(order.created_at).toLocaleDateString('it-IT')} • {new Date(order.created_at).toLocaleTimeString('it-IT')}
-                      </span>
-                    ) : (
-                      <>
-                        <span>
-                          Ordinato {timing.elapsedMinutes} min fa • {new Date(order.created_at).toLocaleTimeString('it-IT')}
-                        </span>
-                        {timing.estimatedRemainingMinutes !== null && (
-                          <span className={timing.isOverdue ? 'overdue' : 'text-muted'}>
-                            {timing.isOverdue
-                              ? `In ritardo di ${Math.abs(timing.estimatedRemainingMinutes)} min`
-                              : `Stima: ${timing.estimatedRemainingMinutes} min`}
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                <div className="active-orders__timing">
+                  <span>
+                    {order.status === 'delivered' || order.status === 'payed'
+                      ? `Pagato il ${new Date(order.created_at).toLocaleDateString('it-IT')} alle ${new Date(order.created_at).toLocaleTimeString('it-IT')}`
+                      : `Ordinato il ${new Date(order.created_at).toLocaleDateString('it-IT')} alle ${new Date(order.created_at).toLocaleTimeString('it-IT')}`
+                    }
+                  </span>
+                </div>
 
                 <div>
                   <strong>Piatti ({order.items.length})</strong>
