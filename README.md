@@ -26,7 +26,7 @@ ByteRisto follows a microservices architecture with the following key components
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/pennyw1ze/ByteRisto
+   git clone https://github.com/theunick/ByteRisto
    cd ByteRisto
    ```
 
